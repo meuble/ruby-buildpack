@@ -10,7 +10,11 @@ module LanguagePack
     def initialize(host_url, stack: nil, arch: nil)
       @host_url = Pathname.new(host_url)
       # File.basename prevents accidental directory traversal
-      @host_url += File.basename(stack) if stack
+      scalingo_stack = stack&.gsub("heroku-", "scalingo-")
+      if scalingo_stack == "scalingo-24" && arch.nil?
+        arch = "amd64"
+      end
+      @host_url += File.basename(scalingo_stack) if stack
       @host_url += File.basename(arch) if arch
     end
 

@@ -28,13 +28,14 @@ curl_retry_on_18() {
 ruby_url() {
   local stack=$1
   local version=$2
+  local scalingo_stack="${stack/heroku-/scalingo-}"
 
-  if [ "$stack" == "scalingo-24" ]; then
+  if [ "$scalingo_stack" == "scalingo-24" ]; then
     local arch
     arch=$(dpkg --print-architecture)
-    echo "${BUILDPACK_VENDOR_URL:-"https://ruby-binaries.scalingo.com/${stack}/${arch}/ruby-${version}.tgz"}"
+    echo "${BUILDPACK_VENDOR_URL:-"https://ruby-binaries.scalingo.com/${scalingo_stack}/${arch}/ruby-${version}.tgz"}"
   else
-    echo "${BUILDPACK_VENDOR_URL:-"https://ruby-binaries.scalingo.com/${stack}/ruby-${version}.tgz"}"
+    echo "${BUILDPACK_VENDOR_URL:-"https://ruby-binaries.scalingo.com/${scalingo_stack}/ruby-${version}.tgz"}"
   fi
 }
 
