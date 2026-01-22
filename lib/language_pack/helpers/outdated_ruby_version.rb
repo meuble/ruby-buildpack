@@ -4,7 +4,7 @@
 #
 # Example:
 #
-#   ruby_version = LanguagePack::RubyVersion.new("ruby-2.2.5")
+#   ruby_version = LanguagePack::RubyVersion.from_gemfile_lock(ruby: gemfile_lock.ruby)
 #   outdated = LanguagePack::Helpers::OutdatedRubyVersion.new(
 #     current_ruby_version: ruby_version,
 #     fetcher: LanguagePack::Fetcher.new(LanguagePack::Base::VENDOR_URL, stack: "heroku-22")
@@ -34,7 +34,6 @@ class LanguagePack::Helpers::OutdatedRubyVersion
   end
 
   def can_check?
-    return false if current_ruby_version.patchlevel_is_significant?
     return false if current_ruby_version.jruby?
 
     true
@@ -42,7 +41,7 @@ class LanguagePack::Helpers::OutdatedRubyVersion
 
   # Enqueues checks in the background
   def call
-    return unless can_check?
+    return self unless can_check?
     raise "Cannot `call()` twice" unless @minor_version_threads.empty?
 
     check_minor_versions
@@ -176,7 +175,7 @@ class LanguagePack::Helpers::OutdatedRubyVersion
       next if !@fetcher.exists?("#{version}.tgz")
 
       check_eol_versions_minor(
-        base_version: LanguagePack::RubyVersion.new(version)
+        base_version: LanguagePack::RubyVersion.default(last_version: version)
       )
 
       version

@@ -2,14 +2,22 @@
 # The actual `bin/test-compile` code lives in `bin/ruby_test-compile`. This file instead
 # bootstraps the ruby needed and then executes `bin/ruby_test-compile`
 
+set -euo pipefail
+
 BIN_DIR=$(cd "$(dirname "$0")" || exit; pwd) # absolute path
-BUILDPACK_DIR=$(dirname "$BIN_DIR")
 
 # shellcheck source=bin/support/bash_functions.sh
 source "$BIN_DIR/support/bash_functions.sh"
 
-bootstrap_ruby_dir=$(install_bootstrap_ruby "$BIN_DIR" "$BUILDPACK_DIR")
-export PATH="$bootstrap_ruby_dir/bin/:$PATH"
-unset GEM_PATH
+# The bin/report mechanism is not available in bin/test-compile or bin/test
+# https://github.com/heroku/heroku-buildpack-ruby/pull/1635/files#r2293558218
+#
+# Do not initialize 'build_data::init' here. Without initialization,
+# the build_data calls will write to `/dev/null`, preventing errors.
+# Do not add additional 'build_data::' calls to this file.
 
-"$bootstrap_ruby_dir"/bin/ruby "$BIN_DIR/support/ruby_test" "$@"
+bootstrap_ruby_dir=$(mktemp -d)
+"$BIN_DIR"/support/download_ruby "$BIN_DIR" "$bootstrap_ruby_dir"
+trap 'rm -rf "$bootstrap_ruby_dir"' EXIT
+
+"$bootstrap_ruby_dir"/bin/ruby "$BIN_DIR/support/ruby_test.rb" "$@"

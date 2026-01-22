@@ -9,39 +9,38 @@ require "language_pack/metadata"
 require "language_pack/fetcher"
 
 Encoding.default_external = Encoding::UTF_8 if defined?(Encoding)
-ENV["BPLOG_PREFIX"] = "buildpack.ruby"
 
 # abstract class that all the Ruby based Language Packs inherit from
 class LanguagePack::Base
   include LanguagePack::ShellHelpers
   extend LanguagePack::ShellHelpers
 
-  # VENDOR_URL           = ENV['BUILDPACK_VENDOR_URL'] || "https://s3-external-1.amazonaws.com/heroku-buildpack-ruby"
   VENDOR_URL           = ENV['BUILDPACK_VENDOR_URL'] || "https://ruby-binaries.scalingo.com"
-  DEFAULT_LEGACY_STACK = "scalingo"
+  # DEFAULT_LEGACY_STACK = "scalingo"
   ROOT_DIR             = File.expand_path("../../..", __FILE__)
   MULTI_ARCH_STACKS    = ["scalingo-24"]
-  KNOWN_ARCHITECTURES  = ["amd64", "arm64"]
+  KNOWN_ARCHITECTURES  = ["amd64"]
 
-  attr_reader :build_path, :cache, :stack
+  attr_reader :app_path, :bundler, :cache, :environment_name, :stack
 
-  # changes directory to the build_path
-  # @param [String] the path of the build dir
-  # @param [String] the path of the cache dir this is nil during detect and release
-  def initialize(build_path, cache_path = nil)
-    @build_path    = build_path
+  def initialize(app_path: , arch: , bundler: , cache_path: , environment_name: , gemfile_lock: , new_app: , ruby_version: , warn_io: )
+    @app_path = app_path
+    @arch = arch
+    @bundler = bundler
+    @environment_name = environment_name
+    @gemfile_lock = gemfile_lock
+    @new_app = new_app
+    @ruby_version = ruby_version
+    @warn_io = warn_io
     @stack         = ENV.fetch("STACK")
     @cache         = LanguagePack::Cache.new(cache_path)
-    @metadata      = LanguagePack::Metadata.new(@cache)
+    @metadata      = LanguagePack::Metadata.new(cache_path: cache_path)
     @bundler_cache = LanguagePack::BundlerCache.new(@cache, @stack)
-    @id            = Digest::SHA1.hexdigest("#{Time.now.to_f}-#{rand(1000000)}")[0..10]
     @fetchers      = {:buildpack => LanguagePack::Fetcher.new(VENDOR_URL) }
-    @arch = get_arch
-
-    Dir.chdir build_path
+    @report = HerokuBuildReport::GLOBAL
   end
 
-  def get_arch
+  def self.get_arch
     command = "dpkg --print-architecture"
     arch = run!(command, silent: true).strip
 
@@ -55,7 +54,11 @@ class LanguagePack::Base
     arch
   end
 
-  def self.===(build_path)
+  def new_app?
+    @new_app
+  end
+
+  def self.===(app_path)
     raise "must subclass"
   end
 
@@ -67,13 +70,6 @@ class LanguagePack::Base
 
   # list of default addons to install
   def default_addons
-    raise "must subclass"
-  end
-
-  # config vars to be set on first push.
-  # @return [Hash] the result
-  # @not: this is only set the first time an app is pushed to.
-  def default_config_vars
     raise "must subclass"
   end
 
@@ -94,18 +90,12 @@ class LanguagePack::Base
       puts warning
       Kernel.puts ""
     end
-    if deprecations.any?
-      topic "DEPRECATIONS:"
-      puts @deprecations.join("\n")
-    end
     Kernel.puts ""
-    mcount "success"
   end
 
   def build_release
     release = {}
     release["addons"]                = default_addons
-    release["config_vars"]           = default_config_vars
     release["default_process_types"] = default_process_types
 
     release
@@ -113,7 +103,7 @@ class LanguagePack::Base
 
   def write_release_yaml
     release = build_release
-    FileUtils.mkdir("tmp") unless File.exists?("tmp")
+    FileUtils.mkdir("tmp") unless File.exist?("tmp")
     File.open("tmp/heroku-buildpack-release-step.yml", 'w') do |f|
       f.write(release.to_yaml)
     end
@@ -128,40 +118,11 @@ class LanguagePack::Base
     warn msg
   end
 
-
-
-  # log output
-  # Ex. log "some_message", "here", :someattr="value"
-  def log(*args)
-    args.concat [:id => @id]
-    args.concat [:framework => self.class.to_s.split("::").last.downcase]
-
-    start = Time.now.to_f
-    log_internal args, :start => start
-
-    if block_given?
-      begin
-        ret = yield
-        finish = Time.now.to_f
-        log_internal args, :status => "complete", :finish => finish, :elapsed => (finish - start)
-        return ret
-      rescue StandardError => ex
-        finish  = Time.now.to_f
-        message = Shellwords.escape(ex.message)
-        log_internal args, :status => "error", :finish => finish, :elapsed => (finish - start), :message => message
-        raise ex
-      end
-    end
-  end
-
 private ##################################
 
-  # sets up the environment variables for the build process
-  def setup_language_pack_environment
-  end
 
   def add_to_profiled(string, filename: "ruby.sh", mode: "a")
-    profiled_path = "#{build_path}/.profile.d/"
+    profiled_path = "#{app_path}/.profile.d/"
 
     FileUtils.mkdir_p profiled_path
     File.open("#{profiled_path}/#{filename}", mode) do |file|
@@ -212,21 +173,5 @@ private ##################################
 
   def set_export_path(key, val)
     export key, val, option: :path
-  end
-
-  def log_internal(*args)
-    message = build_log_message(args)
-    %x{ logger -p user.notice -t "slugc[$$]" "buildpack-ruby #{message}" }
-  end
-
-  def build_log_message(args)
-    args.map do |arg|
-      case arg
-        when Float then "%0.2f" % arg
-        when Array then build_log_message(arg)
-        when Hash  then arg.map { |k,v| "#{k}=#{build_log_message([v])}" }.join(" ")
-        else arg
-      end
-    end.join(" ")
   end
 end

@@ -3,23 +3,328 @@
 ## [Unreleased]
 
 
+## [v344] - 2026-01-14
+
+- Ruby 3.2.10 is now available
+
+
+## [v343] - 2026-01-13
+
+- Ruby 4.0.1 is now available
+
+
+## [v342] - 2026-01-09
+
+- Update bundler version warning output (https://github.com/heroku/heroku-buildpack-ruby/pull/1697)
+
+
+## [v341] - 2026-01-09
+
+- Bundler version installed now directly matches the value in `BUNDLED WITH` from the `Gemfile.lock`
+  Previously, this value was converted to a "known good version." For example:
+
+  `BUNDLED WITH` 2.7.x installs `bundler 2.7.2`
+
+  Now, the exact version from the `Gemfile.lock` is installed instead. Applications without
+  a `BUNDLED WITH` value will receive a default bundler version. (https://github.com/heroku/heroku-buildpack-ruby/pull/1695)
+
+
+## [v340] - 2026-01-06
+
+- Bundler version is now installed via running `gem install bundler` previously it was pre-built
+  and downloaded directly from S3.
+
+ This change should be a refactor (no observed change in build behavior). If your app can build with `https://github.com/heroku/heroku-buildpack-ruby#v334` but not with this version, please open a
+ support ticket https://help.heroku.com/. (https://github.com/heroku/heroku-buildpack-ruby/pull/1680)
+
+
+## [v339] - 2026-01-05
+
+- Ruby is now installed before bundler. Previously, Bundler was used to detect the Ruby version by calling
+  `bundle platform --ruby`. Now that the Ruby version is detected directly from the  `Gemfile.lock`, the
+  order of installation can be changed such that Ruby is installed before Bundler.
+
+  This change should be a refactor (no observed change in build behavior), but involved substantial
+  internal changes. If your app can build with `https://github.com/heroku/heroku-buildpack-ruby#v335`
+  but not with this version, please open a support ticket https://help.heroku.com/. (https://github.com/heroku/heroku-buildpack-ruby/pull/1684)
+- The `PATH` order on Heroku CI relying on `bin/test` interface has changed for applications using the `heroku/ruby`
+  buildpack. It now starts with: `/app/bin:/app/vendor/bundle/bin:/app/vendor/bundle/ruby/3.3.0/bin` which matches
+  the behavior of regular `git push heroku` and customers who specify tests via `app.json`.
+  (https://github.com/heroku/heroku-buildpack-ruby/pull/1684)
+
+
+## [v338] - 2025-12-25
+
+- Ruby 4.0.0 is now available
+
+
+## [v337] - 2025-12-18
+
+- Ruby 4.0.0.preview3 is now available
+
+
+## [v336] - 2025-12-17
+
+- Ruby 3.4.8 is now available
+
+
+## [v335] - 2025-12-15
+
+- Ruby CI applications not using Rails now have `RACK_ENV=test` set (https://github.com/heroku/heroku-buildpack-ruby/pull/1683)
+
+## [v334] - 2025-12-12
+
+- Rolled back due to https://github.com/heroku/heroku-buildpack-ruby/issues/1681
+
+## [v333] - 2025-12-03
+
+- Ruby apps using bundler 4.0.x will now receive bundler 4.0.0 (https://github.com/heroku/heroku-buildpack-ruby/pull/1677)
+
+## [v332] - 2025-12-02
+
+- Ruby version is now pulled directly from `Gemfile.lock`. Previously the version was indirectly pulled
+  via shelling out to `bundle platform --ruby`, which requires that the version of Bundler must be resolved
+  and installed first. This new logic allows us to install the requested Ruby version before installing
+  bundler. (https://github.com/heroku/heroku-buildpack-ruby/pull/1665)
+
+## [v331] - 2025-12-02
+
+- Ruby apps using bundler 4.0.x will now receive bundler 4.0.0.beta2 (https://github.com/heroku/heroku-buildpack-ruby/pull/1673)
+
+## [v330] - 2025-12-02
+
+- Support `BUNDLED WITH` in `Gemfile.lock` with two spaces. This was [updated in bundler](https://github.com/ruby/rubygems/pull/9076). [#1668](https://github.com/heroku/heroku-buildpack-ruby/pull/1668)
+
+## [v329] - 2025-11-18
+
+- Fix "BUILD_DIR: unbound variable" error when deploying without a Gemfile with `heroku/ruby` buildpack [#1663](https://github.com/heroku/heroku-buildpack-ruby/pull/1663)
+
+## [v328] - 2025-11-17
+
+- Ruby 4.0.0-preview2 is now available
+
+
+## [v327] - 2025-10-24
+
+- Ruby 3.3.10 is now available
+
+
+## [v326] - 2025-10-21
+
+- Ruby apps using bundler 2.6.x will now receive bundler 2.6.9 (https://github.com/heroku/heroku-buildpack-ruby/pull/1651)
+- Ruby apps using bundler 2.7.x will now receive bundler 2.7.2 (https://github.com/heroku/heroku-buildpack-ruby/pull/1651)
+
+## [v325] - 2025-10-21
+
+- Internal refactor: Remove Cache class dependency from Metadata class (https://github.com/heroku/heroku-buildpack-ruby/pull/1649)
+- Improve message on `bin/detect` failure to include the list of files in the root directory (https://github.com/heroku/heroku-buildpack-ruby/pull/1647)
+
+## [v324] - 2025-10-09
+
+- JRuby 9.4.14.0 is now available
+
+
+## [v323] - 2025-10-08
+
+- Ruby 3.4.7 is now available
+
+
+## [v322] - 2025-09-29
+
+- Set `export PUMA_PERSISTENT_TIMEOUT=95` to match recommended router 2.0 settings for Rails applications (https://github.com/heroku/heroku-buildpack-ruby/pull/1645)
+- Warn when using Puma prior to 7.0.0 for Router 2.0 compatibility (https://github.com/heroku/heroku-buildpack-ruby/pull/1645)
+- Error when using Puma 7.0.0 to 7.0.2 (inclusive) to prevent runtime error with `PUMA_PERSISTENT_TIMEOUT` (https://github.com/heroku/heroku-buildpack-ruby/pull/1645)
+- The `config_vars` field is no longer set in `bin/release`, this feature only affected the first deploy and is redundant with `.profile.d` usage that already exists. (https://github.com/heroku/heroku-buildpack-ruby/pull/1645)
+
+## [v321] - 2025-09-16
+
+- Ruby 3.4.6 is now available
+
+
+## [v320] - 2025-09-09
+
+- Set `export PUMA_PERSISTENT_TIMEOUT=95` to match recommended router 2.0 settings for Rack applications (https://github.com/heroku/heroku-buildpack-ruby/pull/1641)
+
+## [v319] - 2025-08-27
+
+- Add bash based failure metrics reporting for `bin/report`. This allows the buildpack to distinguish beteween types of failures that occur before Ruby code in the buildpack has executed (such as when bootstrapping). (https://github.com/heroku/heroku-buildpack-ruby/pull/1635)
+
+## [v318] - 2025-08-11
+
+- Fix `heroku_buildpack_ruby_dir: unbound variable` warning (https://github.com/heroku/heroku-buildpack-ruby/pull/1632)
+
+## [v317] - 2025-08-07
+
+- JRuby 10.0.2.0 is now available
+
+
+## [v316] - 2025-08-06
+
+- Explicitly error on end-of-life (EOL) stack `heroku-20` (https://github.com/heroku/heroku-buildpack-ruby/pull/1629)
+- Default Ruby version is now 3.3.9 (https://github.com/heroku/heroku-buildpack-ruby/pull/1624)
+
+## [v315] - 2025-07-24
+
+- Ruby 3.2.9 and 3.3.9 is now available
+
+
+## [v314] - 2025-07-18
+
+- JRuby 10.0.1.0 is now available
+
+
+## [v313] - 2025-07-15
+
+- Ruby 3.4.5 is now available
+
+
+## [v312] - 2025-06-10
+
+- JRuby 9.4.13.0 is now available
+
+
+## [v311] - 2025-06-09
+
+
+- Stream `bundle list` when `bundle install` emits no gem information. This condition happens when bundler 2.4+ runs with no gem additions or deletions (https://github.com/heroku/heroku-buildpack-ruby/pull/1610)
+
+## [v310] - 2025-05-27
+
+- Introduce internal metrics for deriving Ruby version directly from the `Gemfile.lock` to avoid needing to call `bundle platform --ruby` in the future. No change in behavior is expected. (https://github.com/heroku/heroku-buildpack-ruby/pull/1603)
+
+## [v309] - 2025-05-19
+
+- Default Ruby version is now 3.3.8 (https://github.com/heroku/heroku-buildpack-ruby/pull/1595)
+
+## [v308] - 2025-05-15
+
+- Removed support for Ubuntu 20.04 (and thus Heroku-20 / `heroku/builder:20`). This includes removing support for Ruby < 3.1 and Bundler < 2.3. (https://github.com/heroku/buildpacks-ruby/pull/1591)
+
+## [v307] - 2025-05-14
+
+- Ruby 3.4.4 is now available
+
+
+## [v306] - 2025-05-08
+
+- JRuby 9.4.12.0, 9.4.12.1, 10.0.0.0, and 10.0.0.1 is now available
+
+
+## [v305] - 2025-04-28
+
+- Fix `cp --update=none` warning `heroku-22` (https://github.com/heroku/heroku-buildpack-ruby/pull/1588)
+
+## [v304] - 2025-04-28
+
+- Fix `cp --update=none` on `heroku-20` (https://github.com/heroku/heroku-buildpack-ruby/pull/1586)
+
+## [v303] - 2025-04-25
+
+- Ruby 3.5.0-preview1 is now available
+- Fix warning message about `cp -n` (https://github.com/heroku/heroku-buildpack-ruby/pull/1583)
+
+## [v302] - 2025-04-16
+
+- Ruby 3.3.8 is now available
+
+
+## [v301] - 2025-04-14
+
+- Observe `.ruby-version` formats (https://github.com/heroku/heroku-buildpack-ruby/pull/1576)
+
+## [v300] - 2025-04-14
+
+- Ruby 3.4.3 is now available
+
+
+## [v299] - 2025-04-07
+
+
+## [v298] - 2025-04-03
+
+- Added observability metrics (https://github.com/heroku/heroku-buildpack-ruby/pull/1569)
+
+## [v297] - 2025-03-26
+
+- Ruby 3.1.7 and 3.2.8 is now available
+
+## [v296] - 2025-03-21
+
+- Bundler `1.x` usage error is downgraded to a warning. This warning will be moved to an error once `heroku-20` is Sunset (https://github.com/heroku/heroku-buildpack-ruby/pull/1565)
+
+## [v295] - 2025-03-20
+
+- Explicit error message raised with upgrade instructions for applications specifying bundler `1.x` in the Gemfile.lock (https://github.com/heroku/heroku-buildpack-ruby/pull/1561)
+
+## [v294] - 2025-03-19
+
+- Default Ruby version is now 3.3.7 (https://github.com/heroku/heroku-buildpack-ruby/pull/1534)
+- Default bundler version (when no version present in the `Gemfile.lock`) is now bundler `2.3.x` which is currently `2.3.25` (https://github.com/heroku/heroku-buildpack-ruby/pull/1534)
+- Bundler 1.x will no longer work with the Ruby buildpack (https://github.com/heroku/heroku-buildpack-ruby/pull/1534)
+
+## [v293] - 2025-02-15
+
+- Ruby 3.4.2 is now available (https://github.com/heroku/heroku-buildpack-ruby/pull/1548)
+
+## [v292] - 2025-02-10
+
+- Ruby 3.2.7 is now available (https://github.com/heroku/heroku-buildpack-ruby/pull/1545)
+
+## [v291] - 2025-01-30
+
+- JRuby 9.4.11.0 is now available (https://github.com/heroku/heroku-buildpack-ruby/pull/1542)
+
+## [v290] - 2025-01-23
+
+- JRuby 9.4.10.0 is now available (https://github.com/heroku/heroku-buildpack-ruby/pull/1540)
+
+## [v289] - 2025-01-17
+
+- Ruby 3.3.7 is now available (https://github.com/heroku/heroku-buildpack-ruby/pull/1538)
+
+## [v288] - 2025-01-06
+
+- Ruby apps using bundler 2.6+ will now receive bundler 2.6.2 (https://github.com/heroku/heroku-buildpack-ruby/pull/1535)
+- Ruby apps using bundler 2.5.x will now receive bundler 2.5.23 (https://github.com/heroku/heroku-buildpack-ruby/pull/1535)
+
+## [v287] - 2024-12-25
+
+- Ruby 3.4.0 is now available (https://github.com/heroku/heroku-buildpack-ruby/pull/1531)
+- Ruby 3.4.1 is now available (https://github.com/heroku/heroku-buildpack-ruby/pull/1531)
+
+## [v286] - 2024-12-13
+
+- Ruby 3.4.0-rc1 is now available (https://github.com/heroku/heroku-buildpack-ruby/pull/1528)
+
+## [v285] - 2024-11-21
+
+- Default `UV_USE_IO_URING=0` due to build timeouts [context](https://github.com/heroku/heroku-buildpack-nodejs/pull/1347) (https://github.com/heroku/heroku-buildpack-ruby/pull/1523)
+
+## [v284] - 2024-11-15
+
+- Default Node.js version now 22.11.0 (https://github.com/heroku/heroku-buildpack-ruby/pull/1503)
+- Default Yarn version now 1.22.22 (https://github.com/heroku/heroku-buildpack-ruby/pull/1503)
+
+## [v283] - 2024-11-14
+
+- No customer facing changes
+
+## [v282] - 2024-11-08
+
+- [Rolled back] Default Node.js version now 22.11.0 (https://github.com/heroku/heroku-buildpack-ruby/pull/1503)
+- [Rolled back] Default Yarn version now 1.22.22 (https://github.com/heroku/heroku-buildpack-ruby/pull/1503)
+
 ## [v281] - 2024-11-07
 
-- Ruby 3.3.6 is now available (https://github.com/heroku/heroku-buildpack-ruby/pull/1511)
-- Add detection support for Rails 8 (https://github.com/heroku/heroku-buildpack-ruby/pull/1498)
 - Support Node.js on ARM builds (https://github.com/heroku/heroku-buildpack-ruby/pull/1499)
-
-## [v280] - 2024-11-06
-
-- JRuby 9.4.9.0 is now available (https://github.com/heroku/heroku-buildpack-ruby/pull/1506)
-
-## [v280] - 2024-11-01
-
+- Add detection support for Rails 8 (https://github.com/heroku/heroku-buildpack-ruby/pull/1498)
 - Ruby 3.2.6 is now available (https://github.com/heroku/heroku-buildpack-ruby/pull/1504)
+- JRuby 9.4.9.0 is now available (https://github.com/heroku/heroku-buildpack-ruby/pull/1506)
+- Ruby 3.3.6 is now available (https://github.com/heroku/heroku-buildpack-ruby/pull/1511)
 
 ## [v280] - 2024-10-08
 
-- Ruby 3.4.0 is now available (https://github.com/heroku/heroku-buildpack-ruby/pull/1496)
+- Ruby 3.4.0-preview2 is now available (https://github.com/heroku/heroku-buildpack-ruby/pull/1496)
 
 ## [v279] - 2024-09-04
 
@@ -1584,7 +1889,70 @@ Bugfixes:
 * Change gem detection to use lockfile parser
 * use `$RACK_ENV` when thin is detected for rack apps
 
-[unreleased]: https://github.com/heroku/heroku-buildpack-ruby/compare/v281...main
+[unreleased]: https://github.com/heroku/heroku-buildpack-ruby/compare/v344...main
+[v344]: https://github.com/heroku/heroku-buildpack-ruby/compare/v343...v344
+[v343]: https://github.com/heroku/heroku-buildpack-ruby/compare/v342...v343
+[v342]: https://github.com/heroku/heroku-buildpack-ruby/compare/v341...v342
+[v341]: https://github.com/heroku/heroku-buildpack-ruby/compare/v340...v341
+[v340]: https://github.com/heroku/heroku-buildpack-ruby/compare/v339...v340
+[v339]: https://github.com/heroku/heroku-buildpack-ruby/compare/v338...v339
+[v338]: https://github.com/heroku/heroku-buildpack-ruby/compare/v337...v338
+[v337]: https://github.com/heroku/heroku-buildpack-ruby/compare/v336...v337
+[v336]: https://github.com/heroku/heroku-buildpack-ruby/compare/v335...v336
+[v335]: https://github.com/heroku/heroku-buildpack-ruby/compare/v334...v335
+[v334]: https://github.com/heroku/heroku-buildpack-ruby/compare/v333...v334
+[v333]: https://github.com/heroku/heroku-buildpack-ruby/compare/v332...v333
+[v332]: https://github.com/heroku/heroku-buildpack-ruby/compare/v331...v332
+[v331]: https://github.com/heroku/heroku-buildpack-ruby/compare/v330...v331
+[v330]: https://github.com/heroku/heroku-buildpack-ruby/compare/v329...v330
+[v329]: https://github.com/heroku/heroku-buildpack-ruby/compare/v328...v329
+[v328]: https://github.com/heroku/heroku-buildpack-ruby/compare/v327...v328
+[v327]: https://github.com/heroku/heroku-buildpack-ruby/compare/v326...v327
+[v326]: https://github.com/heroku/heroku-buildpack-ruby/compare/v325...v326
+[v325]: https://github.com/heroku/heroku-buildpack-ruby/compare/v324...v325
+[v324]: https://github.com/heroku/heroku-buildpack-ruby/compare/v323...v324
+[v323]: https://github.com/heroku/heroku-buildpack-ruby/compare/v322...v323
+[v322]: https://github.com/heroku/heroku-buildpack-ruby/compare/v321...v322
+[v321]: https://github.com/heroku/heroku-buildpack-ruby/compare/v320...v321
+[v320]: https://github.com/heroku/heroku-buildpack-ruby/compare/v319...v320
+[v319]: https://github.com/heroku/heroku-buildpack-ruby/compare/v318...v319
+[v318]: https://github.com/heroku/heroku-buildpack-ruby/compare/v317...v318
+[v317]: https://github.com/heroku/heroku-buildpack-ruby/compare/v316...v317
+[v316]: https://github.com/heroku/heroku-buildpack-ruby/compare/v315...v316
+[v315]: https://github.com/heroku/heroku-buildpack-ruby/compare/v314...v315
+[v314]: https://github.com/heroku/heroku-buildpack-ruby/compare/v313...v314
+[v313]: https://github.com/heroku/heroku-buildpack-ruby/compare/v312...v313
+[v312]: https://github.com/heroku/heroku-buildpack-ruby/compare/v311...v312
+[v311]: https://github.com/heroku/heroku-buildpack-ruby/compare/v310...v311
+[v310]: https://github.com/heroku/heroku-buildpack-ruby/compare/v309...v310
+[v309]: https://github.com/heroku/heroku-buildpack-ruby/compare/v308...v309
+[v308]: https://github.com/heroku/heroku-buildpack-ruby/compare/v307...v308
+[v307]: https://github.com/heroku/heroku-buildpack-ruby/compare/v306...v307
+[v306]: https://github.com/heroku/heroku-buildpack-ruby/compare/v305...v306
+[v305]: https://github.com/heroku/heroku-buildpack-ruby/compare/v304...v305
+[v304]: https://github.com/heroku/heroku-buildpack-ruby/compare/v303...v304
+[v303]: https://github.com/heroku/heroku-buildpack-ruby/compare/v302...v303
+[v302]: https://github.com/heroku/heroku-buildpack-ruby/compare/v301...v302
+[v301]: https://github.com/heroku/heroku-buildpack-ruby/compare/v300...v301
+[v300]: https://github.com/heroku/heroku-buildpack-ruby/compare/v299...v300
+[v299]: https://github.com/heroku/heroku-buildpack-ruby/compare/v298...v299
+[v298]: https://github.com/heroku/heroku-buildpack-ruby/compare/v297...v298
+[v297]: https://github.com/heroku/heroku-buildpack-ruby/compare/v296...v297
+[v296]: https://github.com/heroku/heroku-buildpack-ruby/compare/v295...v296
+[v295]: https://github.com/heroku/heroku-buildpack-ruby/compare/v294...v295
+[v294]: https://github.com/heroku/heroku-buildpack-ruby/compare/v293...v294
+[v293]: https://github.com/heroku/heroku-buildpack-ruby/compare/v292...v293
+[v292]: https://github.com/heroku/heroku-buildpack-ruby/compare/v291...v292
+[v291]: https://github.com/heroku/heroku-buildpack-ruby/compare/v290...v291
+[v290]: https://github.com/heroku/heroku-buildpack-ruby/compare/v289...v290
+[v289]: https://github.com/heroku/heroku-buildpack-ruby/compare/v288...v289
+[v288]: https://github.com/heroku/heroku-buildpack-ruby/compare/v287...v288
+[v287]: https://github.com/heroku/heroku-buildpack-ruby/compare/v286...v287
+[v286]: https://github.com/heroku/heroku-buildpack-ruby/compare/v285...v286
+[v285]: https://github.com/heroku/heroku-buildpack-ruby/compare/v284...v285
+[v284]: https://github.com/heroku/heroku-buildpack-ruby/compare/v283...v284
+[v283]: https://github.com/heroku/heroku-buildpack-ruby/compare/v282...v283
+[v282]: https://github.com/heroku/heroku-buildpack-ruby/compare/v281...v282
 [v281]: https://github.com/heroku/heroku-buildpack-ruby/compare/v280...v281
 [v280]: https://github.com/heroku/heroku-buildpack-ruby/compare/v279...v280
 [v279]: https://github.com/heroku/heroku-buildpack-ruby/compare/v278...v279

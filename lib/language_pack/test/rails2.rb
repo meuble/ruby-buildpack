@@ -1,24 +1,6 @@
 # Opens up the class of the Rails2 language pack and
 # overwrites methods defined in `language_pack/test/ruby.rb`
 class LanguagePack::Rails2
-  # sets up the profile.d script for this buildpack
-  def setup_profiled(ruby_layer_path: , gem_layer_path: )
-    super
-    set_env_default "RACK_ENV",  "test"
-    set_env_default "RAILS_ENV", "test"
-  end
-
-  def default_env_vars
-    {
-      "RAILS_ENV" => "test",
-      "RACK_ENV"  => "test"
-    }
-  end
-
-  def rake_env
-    super.merge(default_env_vars)
-  end
-
   def prepare_tests
     # need to clear db:create before db:schema:load_if_ruby gets called by super
     topic "Clearing #{db_test_tasks_to_clear.join(" ")} rake tasks"
@@ -39,13 +21,13 @@ class LanguagePack::Rails2
     File.open("lib/tasks/heroku_clear_tasks.rake", "w") do |file|
       file.puts "# rubocop:disable all"
       content = db_test_tasks_to_clear.map do |task_name|
-        <<-FILE
-if Rake::Task.task_defined?('#{task_name}')
-  Rake::Task['#{task_name}'].clear
-  task '#{task_name}' do
-  end
-end
-FILE
+        <<~FILE
+          if Rake::Task.task_defined?('#{task_name}')
+            Rake::Task['#{task_name}'].clear
+            task '#{task_name}' do
+            end
+          end
+        FILE
       end.join("\n")
       file.print content
       file.puts "# rubocop:enable all"
